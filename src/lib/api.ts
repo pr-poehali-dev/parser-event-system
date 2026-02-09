@@ -4,6 +4,7 @@ const API_URLS = {
   channels: funcUrls['api-channels'],
   events: funcUrls['api-events'],
   parser: funcUrls['telegram-parser'],
+  settings: funcUrls['api-settings'],
 };
 
 export interface Channel {
@@ -94,6 +95,22 @@ export const api = {
     channel: string;
   }> {
     const response = await fetch(`${API_URLS.parser}?action=parse&channel_id=${channelId}`);
+    const data = await response.json();
+    return data;
+  },
+
+  async getSettings(): Promise<Record<string, { value: string; description: string }>> {
+    const response = await fetch(API_URLS.settings);
+    const data = await response.json();
+    return data.settings;
+  },
+
+  async updateSettings(settings: Record<string, string>): Promise<{ success: boolean; updated: number }> {
+    const response = await fetch(API_URLS.settings, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings }),
+    });
     const data = await response.json();
     return data;
   },

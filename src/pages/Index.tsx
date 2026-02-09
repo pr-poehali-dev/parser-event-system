@@ -6,6 +6,7 @@ import DashboardTab from '@/components/DashboardTab';
 import ChannelsTab from '@/components/ChannelsTab';
 import EventsTab from '@/components/EventsTab';
 import AnalyticsMonitoringTabs from '@/components/AnalyticsMonitoringTabs';
+import ParserSettings from '@/components/ParserSettings';
 import { api, type Channel, type Event } from '@/lib/api';
 
 const activityData = [
@@ -146,7 +147,7 @@ const Index = () => {
 
       <div className="container mx-auto px-6 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard">
               <Icon name="LayoutDashboard" size={16} className="mr-2" />
               Dashboard
@@ -166,6 +167,10 @@ const Index = () => {
             <TabsTrigger value="monitoring">
               <Icon name="Activity" size={16} className="mr-2" />
               Мониторинг
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Icon name="Settings" size={16} className="mr-2" />
+              Настройки
             </TabsTrigger>
           </TabsList>
 
@@ -200,6 +205,10 @@ const Index = () => {
             activityData={activityData}
             channelStatsData={channelStatsData}
           />
+
+          <TabsContent value="settings">
+            <ParserSettings />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
