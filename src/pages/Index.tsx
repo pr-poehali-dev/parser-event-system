@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
@@ -6,23 +6,7 @@ import DashboardTab from '@/components/DashboardTab';
 import ChannelsTab from '@/components/ChannelsTab';
 import EventsTab from '@/components/EventsTab';
 import AnalyticsMonitoringTabs from '@/components/AnalyticsMonitoringTabs';
-
-const mockChannels = [
-  { id: 1, name: 'Telegram News', status: 'active', messages: 1247, lastParsed: '2 мин назад', category: 'Новости' },
-  { id: 2, name: 'Tech Updates', status: 'active', messages: 892, lastParsed: '5 мин назад', category: 'Технологии' },
-  { id: 3, name: 'Business Analytics', status: 'paused', messages: 634, lastParsed: '1 час назад', category: 'Бизнес' },
-  { id: 4, name: 'Market Insights', status: 'active', messages: 1523, lastParsed: '3 мин назад', category: 'Финансы' },
-  { id: 5, name: 'Crypto News', status: 'error', messages: 445, lastParsed: '30 мин назад', category: 'Криптовалюты' },
-];
-
-const mockEvents = [
-  { id: 1, channel: 'Telegram News', type: 'Новость', title: 'Обновление регуляций в сфере финтех', time: '14:23', priority: 'high' },
-  { id: 2, channel: 'Tech Updates', type: 'Анонс', title: 'Запуск нового API для разработчиков', time: '14:18', priority: 'medium' },
-  { id: 3, channel: 'Market Insights', type: 'Аналитика', title: 'Прогноз роста рынка на Q1 2026', time: '14:12', priority: 'high' },
-  { id: 4, channel: 'Business Analytics', type: 'Отчёт', title: 'Квартальные показатели крупных компаний', time: '13:45', priority: 'medium' },
-  { id: 5, channel: 'Crypto News', type: 'Алерт', title: 'Резкое изменение курса BTC', time: '13:32', priority: 'high' },
-  { id: 6, channel: 'Telegram News', type: 'Новость', title: 'Изменения в политике конфиденциальности', time: '13:15', priority: 'low' },
-];
+import { api, type Channel, type Event } from '@/lib/api';
 
 const activityData = [
   { time: '10:00', messages: 45, events: 12 },
@@ -33,17 +17,72 @@ const activityData = [
   { time: '15:00', messages: 98, events: 28 },
 ];
 
-const channelStatsData = [
-  { name: 'Telegram News', messages: 1247 },
-  { name: 'Tech Updates', messages: 892 },
-  { name: 'Market Insights', messages: 1523 },
-  { name: 'Business Analytics', messages: 634 },
-  { name: 'Crypto News', messages: 445 },
-];
-
 const Index = () => {
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [channelsData, eventsData] = await Promise.all([
+        api.getChannels(),
+        api.getEvents({ limit: 50 })
+      ]);
+      setChannels(channelsData);
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimeAgo = (timestamp?: string) => {
+    if (!timestamp) return 'Никогда';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'только что';
+    if (diffMins < 60) return `${diffMins} мин назад`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)} час${Math.floor(diffMins / 60) === 1 ? '' : 'а'} назад`;
+    return `${Math.floor(diffMins / 1440)} дн назад`;
+  };
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const channelStatsData = channels.map(ch => ({
+    name: ch.name,
+    messages: ch.total_messages
+  }));
+
+  const mockChannelsFormatted = channels.map(ch => ({
+    id: ch.id,
+    name: ch.name,
+    status: ch.status,
+    messages: ch.total_messages,
+    lastParsed: formatTimeAgo(ch.last_parsed_at),
+    category: ch.category || 'Без категории'
+  }));
+
+  const mockEventsFormatted = events.map(evt => ({
+    id: evt.id,
+    channel: evt.channel_name,
+    type: evt.event_type,
+    title: evt.title,
+    time: formatTime(evt.detected_at),
+    priority: evt.priority
+  }));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -62,6 +101,17 @@ const Index = () => {
       default: return 'outline';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Icon name="Loader2" className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="mt-4 text-muted-foreground">Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,7 +171,7 @@ const Index = () => {
 
           <TabsContent value="dashboard">
             <DashboardTab
-              mockEvents={mockEvents}
+              mockEvents={mockEventsFormatted}
               activityData={activityData}
               channelStatsData={channelStatsData}
               getPriorityVariant={getPriorityVariant}
@@ -130,7 +180,7 @@ const Index = () => {
 
           <TabsContent value="channels">
             <ChannelsTab
-              mockChannels={mockChannels}
+              mockChannels={mockChannelsFormatted}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               selectedCategory={selectedCategory}
@@ -141,7 +191,7 @@ const Index = () => {
 
           <TabsContent value="events">
             <EventsTab
-              mockEvents={mockEvents}
+              mockEvents={mockEventsFormatted}
               getPriorityVariant={getPriorityVariant}
             />
           </TabsContent>

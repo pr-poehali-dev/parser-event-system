@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get all channels",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "channels": []
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
