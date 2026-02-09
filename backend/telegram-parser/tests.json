@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Check parser status",
+      "method": "GET",
+      "path": "/?action=status",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "string",
+        "has_credentials": "boolean",
+        "has_session": "boolean",
+        "active_channels": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

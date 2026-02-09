@@ -3,6 +3,7 @@ import funcUrls from '../../backend/func2url.json';
 const API_URLS = {
   channels: funcUrls['api-channels'],
   events: funcUrls['api-events'],
+  parser: funcUrls['telegram-parser'],
 };
 
 export interface Channel {
@@ -74,5 +75,26 @@ export const api = {
     });
     const data = await response.json();
     return data.event;
+  },
+
+  async getParserStatus(): Promise<{
+    status: string;
+    active_channels: number;
+    has_credentials: boolean;
+    has_session: boolean;
+  }> {
+    const response = await fetch(`${API_URLS.parser}?action=status`);
+    const data = await response.json();
+    return data;
+  },
+
+  async parseChannel(channelId: number): Promise<{
+    success: boolean;
+    parsed_messages: number;
+    channel: string;
+  }> {
+    const response = await fetch(`${API_URLS.parser}?action=parse&channel_id=${channelId}`);
+    const data = await response.json();
+    return data;
   },
 };

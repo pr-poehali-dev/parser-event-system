@@ -1,0 +1,1 @@
+ALTER TABLE events ADD CONSTRAINT unique_channel_message UNIQUE (channel_id, message_id);
