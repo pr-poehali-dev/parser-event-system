@@ -130,10 +130,6 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm">
-                <Icon name="Settings" size={16} className="mr-2" />
-                Настройки
-              </Button>
-              <Button variant="outline" size="sm">
                 <Icon name="Bell" size={16} className="mr-2" />
                 Уведомления
               </Button>
